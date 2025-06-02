@@ -90,19 +90,30 @@ This section provides a visual walkthrough of a game session, showcasing the pro
 *(The images are displayed in chronological order. Ensure these images are placed in a folder like `gameplay_screenshots/` in your repository. If you haven't renamed the image files to remove spaces, the links below might need URL encoding for spaces, i.e., replacing spaces with `%20`, or it's best to rename them, e.g., to `game_step_1.png`, `game_step_2.png`, etc.)*
 
 **1. Early Game Setup / Initial Deployment**
+
 ![Game Screenshot 1: Early Game](./imagenes/Captura%20de%20pantalla%202025-05-01%20221343.png)
 
+
 **2. Mid-Game Progression**
+
 ![Game Screenshot 2: Mid-Game](./imagenes/Captura%20de%20pantalla%202025-05-01%20221416.png)
 
+
 **3. Tactical Engagement**
+
 ![Game Screenshot 3: Engagement](./imagenes/Captura%20de%20pantalla%202025-05-01%20221441.png)
 
+
 **4. Advancing / Objective Focus**
+
 ![Game Screenshot 4: Advancing](./imagenes/Captura%20de%20pantalla%202025-05-01%20221457.png)
 
+
 **5. Later Stages of the Match**
+
 ![Game Screenshot 5: Later Stages](./imagenes/Captura%20de%20pantalla%202025-05-01%20221527.png)
 
+
 **6. Final Moments / Outcome**
+
 ![Game Screenshot 6: Final Moments](./imagenes/Captura%20de%20pantalla%202025-05-01%20221629.png)
