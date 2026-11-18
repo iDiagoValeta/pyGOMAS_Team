@@ -22,7 +22,7 @@ Each role is an `.asl` file. The Axis agents in the same files keep the stock pa
 1. The Captain waits at the base, then after a pause sends everyone `go_to` orders toward the flag.
 2. Two custom actions, defined in Python in `Captain.py` (class `CaptainBDI`, registered through `add_custom_actions`), compute the formation: `.calculatePos(num_agents, arc_degrees)` returns the angular step between soldiers, and `.squadForm(center, flag_pos, distance, angle_offset)` returns the target coordinates of one soldier on the arc. The ASL uses a 100 degree arc and a radius of 30 units (the values used on map 01 according to the report).
 3. A recursive belief `issueOrders(Index)` walks the soldier list, sends one position per soldier and restarts the loop every few seconds, so the formation follows the Captain.
-4. The strongest soldiers go first and absorb damage; the Medic and Field Operator are sent to the Captain's position so their packs reach the group.
+4. Soldiers advance in front and absorb damage (per the report); the Medic and Field Operator are sent to the Captain's position so their packs reach the group.
 
 The full design and the author's conclusions are in `memoria_AIN_IDIAVAL.pdf`, inside `equipo_IDIAVAL_pyGomas.zip` (in Spanish).
 
