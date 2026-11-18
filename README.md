@@ -1,119 +1,73 @@
-# Project IDIAVAL - Coordinated Intelligent Agents for pyGOMAS Capture The Flag
+# pyGOMAS_Team
 
-## 1. Overview
-This project implements "IDIAVAL", a team of coordinated intelligent agents designed to play Capture The Flag (CTF) in the pyGOMAS environment. The team consists of a Captain, Soldiers, a Medic, and a Field Operator, each with specialized roles and behaviors. The strategy, detailed in `memoria_AIN_IDIAVAL.pdf`, emphasizes arc formations, anti-friendly fire logic, proactive support (healing and ammunition), and coordinated resource management.
+**IDIAVAL, a team of coordinated BDI agents written in AgentSpeak (Jason-style ASL) that plays Capture The Flag in the pyGOMAS multi-agent environment.**
 
-## 2. About This Repository
-This repository contains:
-* **Agent Implementations (`.zip` file(s))**: You should find one or more zipped archives. Please **unzip them**. They are expected to contain:
-    * AgentSpeak (`.asl`) files for `CaptainIDIAVAL`, `SoldierIDIAVAL`, `MedicIDIAVAL`, and `FieldopIDIAVAL` agents.
-    * Python code for custom actions/functions used by `CaptainIDIAVAL` (e.g., for formation calculations like `.calculatePos` and `.squadForm` mentioned in `memoria_AIN_IDIAVAL.pdf`). This might be in a file like `idiaval_captain_actions.py`.
-    * An example `myagents_IDIAVAL.json` file, pre-configured for the IDIAVAL team composition (1 Captain, 7 Soldiers, 1 Medic, 1 Field Operator).
-* **Guides)**:
-    * `AIN_iniciar_pygomas_guia.pdf`: **Your primary, detailed guide for setting up the pyGOMAS environment and running any match, including this project.**
-    * `memoria_AIN_IDIAVAL.pdf`: A comprehensive report describing the IDIAVAL team's strategy, agent design, and specific implementation details.
-    * `Jason_cheatsheet.pdf` (and/or other ASL guides): Useful resources for understanding the AgentSpeak Language (ASL) used to program the agents.
-    * `pyGOMAS_Manual_v2025.pdf`: The official manual for the pyGOMAS platform.
+> **Context.** Built in June 2025 as a coursework project (the files are named AIN, the subject's code) at UPV, in the first phase of my public GitHub, when I was finishing my Computer Engineering degree and learning multi-agent systems and agent programming. The work itself dates from April and May 2025 (screenshots and files are dated then); the first commit here uploads it in June. It is kept as it was submitted; the code is not maintained.
 
-## 3. Prerequisites
-Before attempting to run this project, you must have a functional pyGOMAS environment. The key prerequisites, detailed in `AIN_iniciar_pygomas_guia.pdf`, are:
-* Anaconda installed on your system.
-* A working XMPP server (e.g., PyJabber). `AIN_iniciar_pygomas_guia.pdf` explains setting up PyJabber.
-* Python: Specific versions are required for different components (e.g., Python 3.7 for the `pygomas` environment, Python 3.10+ for the `pyjabber` environment). Refer to `AIN_iniciar_pygomas_guia.pdf`.
+![Early game: IDIAVAL agents deploying on the map](./imagenes/Captura%20de%20pantalla%202025-05-01%20221343.png)
 
-## 4. Setup and Execution Guide
+## What it does
 
-**Important: For complete, step-by-step instructions on installing pyGOMAS, its dependencies, configuring environments, and running a match, please meticulously follow the guidance in `AIN_iniciar_pygomas_guia.pdf`.**
+- Defines the allied team IDIAVAL: 1 Captain, 7 Soldiers, 1 Medic and 1 Field Operator (`pygomas_local.json`).
+- The Captain registers as a service, collects the lists of soldiers, medics and field operators, and sends each soldier a position in an arc formation facing the flag.
+- Soldiers shoot only when no ally is in the line of fire (anti friendly fire).
+- The Medic creates health packs (`.cure`) and the Field Operator creates ammunition (`.reload`) when they see allies or after moving.
+- Captain, Medic and Field Operator pick up packs and the flag when needed, guarded by a `goingForPack` belief so they do not chase every pack they see. Soldiers ignore packs on purpose, to keep them fighting.
+- Whoever takes the flag returns to the base, which wins the match.
 
-The following steps outline the general process, with specific considerations for the IDIAVAL project:
+## How it works
 
-1.  **Prepare Project Files**:
-    * Download and **unzip** the provided `.zip` file(s) containing the IDIAVAL agent code (ASL files), custom Python actions for the Captain, and the example `myagents_IDIAVAL.json`.
-    * Organize these files. A suggested structure is provided at the end of this README.
+Each role is an `.asl` file. The Axis agents in the same files keep the stock patrol-and-shoot behaviour of the original pyGOMAS code and serve as the opponent; only the `team(100)` (Allied) plans are the author's.
 
-2.  **Set Up Anaconda Environments (refer to `AIN_iniciar_pygomas_guia.pdf` for details)**:
-    * Create an Anaconda environment for the XMPP server (e.g., `pyjabber_env`). Install `pyjabber` in it.
-    * Create a separate Anaconda environment for pyGOMAS (e.g., `pygomas_env`) using Python 3.7. Install `pygomas` and other dependencies like `windows_curses` (if on Windows) in this environment.
+1. The Captain waits at the base, then after a pause sends everyone `go_to` orders toward the flag.
+2. Two custom actions, defined in Python in `Captain.py` (class `CaptainBDI`, registered through `add_custom_actions`), compute the formation: `.calculatePos(num_agents, arc_degrees)` returns the angular step between soldiers, and `.squadForm(center, flag_pos, distance, angle_offset)` returns the target coordinates of one soldier on the arc. The ASL uses a 100 degree arc and a radius of 30 units (the values used on map 01 according to the report).
+3. A recursive belief `issueOrders(Index)` walks the soldier list, sends one position per soldier and restarts the loop every few seconds, so the formation follows the Captain.
+4. The strongest soldiers go first and absorb damage; the Medic and Field Operator are sent to the Captain's position so their packs reach the group.
 
-3.  **Integrate IDIAVAL Agents into Your pyGOMAS Setup**:
-    * **ASL Files**:
-        * Copy the `.asl` files (`CaptainIDIAVAL.asl`, `SoldierIDIAVAL.asl`, `MedicIDIAVAL.asl`, `FieldopIDIAVAL.asl`) into the `pygomas/ASL/` directory of your pyGOMAS installation.
-        * Alternatively, you can place them in a custom folder and update their paths within the `myagents_IDIAVAL.json` file (using the `asl` property for each agent type).
-    * **Custom Captain Actions (Python Code)**:
-        * The `CaptainIDIAVAL` agent relies on custom Python functions/actions (like `.calculatePos` and `.squadForm`) for its formation logic. The Python code for these actions should be in the unzipped files (e.g., in a file like `idiaval_captain_actions.py`).
-        * This Python file needs to define a custom agent class (e.g., `CaptainIDIAVALCustom`) that inherits from a base pyGOMAS troop class (like `BDITroop` or `BDISoldier`) and registers these custom actions. Refer to the pyGOMAS Manual (Section 7.6 "Adding new actions") for how to do this.
-        * In the `myagents_IDIAVAL.json` file, update the `rank` for the `CaptainIDIAVAL` agent to point to this custom class. The format is `<python_file_name_without_py>.<ClassName>`. For example, if your file is `idiaval_captain_actions.py` and the class is `CaptainIDIAVALCustom`, the rank would be: `"rank": "idiaval_captain_actions.CaptainIDIAVALCustom"`.
-    * **Agent Configuration File (`myagents_IDIAVAL.json`)**:
-        * Use the provided `myagents_IDIAVAL.json` as your starting point.
-        * Verify that it correctly lists 1 `CaptainIDIAVAL` (with the custom rank), 7 `SoldierIDIAVAL` agents, 1 `MedicIDIAVAL`, and 1 `FieldopIDIAVAL`.
-        * Ensure agent names are unique if your XMPP server requires it and that ASL paths/ranks are correct.
+The full design and the author's conclusions are in `memoria_AIN_IDIAVAL.pdf`, inside `equipo_IDIAVAL_pyGomas.zip` (in Spanish).
 
-4.  **Running a Match (follow `AIN_iniciar_pygomas_guia.pdf` for terminal commands and sequence)**:
-    * **Step 1: Start your XMPP Server** (e.g., PyJabber) in its own terminal, with its Anaconda environment activated.
-    * **Step 2: Start the pyGOMAS Manager** in a new terminal (with `pygomas_env` activated). You'll need to specify your manager JID, service JID, the map (e.g., `map_01`), and the total number of agents participating in the match (`-np` parameter). For the IDIAVAL team (10 agents) playing against a similar team, this would be `-np 20`.
-        ```bash
-        # Example: Activate pygomas_env and start manager
-        # conda activate pygomas_env # (or your pygomas environment name)
-        # pygomas manager -jm manager@your_xmpp_server -m map_01 -sj service@your_xmpp_server -np 20
-        ```
-    * **Step 3: Run the Agents** in another new terminal (with `pygomas_env` activated), using your configured `myagents_IDIAVAL.json` file.
-        ```bash
-        # Example: Activate pygomas_env and run agents
-        # conda activate pygomas_env
-        # pygomas run -g myagents_IDIAVAL.json
-        ```
-    * **Step 4: Start the Renderer** in a final terminal (with `pygomas_env` activated).
-        ```bash
-        # Example: Activate pygomas_env and start Pygame renderer
-        # conda activate pygomas_env
-        # pygomas render
-        # Or for the text-based renderer:
-        # pygomas render --text
-        ```
+## Results
 
-5.  **Troubleshooting Tips**:
-    * Double-check all paths in `myagents_IDIAVAL.json`, especially for ASL files and the custom Captain class.
-    * Ensure your XMPP server is running correctly and accessible by pyGOMAS components.
-    * Confirm you are in the correct Anaconda environment in each terminal and that all dependencies are installed.
-    * Consult the `Output/logs` directory in your pyGOMAS folder for error messages.
-    * The `AIN_iniciar_pygomas_guia.pdf` also contains troubleshooting information.
+From `pygomas_stats.txt` in `AIN_pyGomas_P1.zip` (one match, the file's own figures): winner ALLIED, duration 0:03:10, 5 allied agents alive with average health 79.6, flag taken once and never lost. Allied shots: 525 enemy hits, 62 team hits, 86 misses, 673 total. Axis shots: 278 enemy hits, 42 team hits, 42 misses. Allied medic and field operator packs delivered: 0 in this log. This is a single recorded run, not a benchmark.
 
-## 5. Understanding the Agent Logic and ASL
-* To understand the detailed strategy and design of the `CaptainIDIAVAL`, `SoldierIDIAVAL`, `MedicIDIAVAL`, and `FieldopIDIAVAL` agents, please read the **`memoria_AIN_IDIAVAL.pdf`**.
-* If you are new to AgentSpeak Language (ASL), the **`Jason_cheatsheet.pdf`** and any other provided ASL materials will be helpful.
-* The **`pyGOMAS_Manual_v2025.pdf`** is an essential resource for understanding the pyGOMAS platform itself, including predefined beliefs, actions, and how to develop custom agent functionalities.
+## Run it
 
-## Visual Gameplay Overview
+Not re-run for this README. The steps below follow the repo's own guide.
 
-This section provides a visual walkthrough of a game session, showcasing the progression from the initial phase to later stages of the match.
+1. Follow `AIN_iniciar_pygomas_guia.pdf` to install pyGOMAS (Python 3.7 environment), an XMPP server such as PyJabber (Python 3.10 or newer) and to start a match. The manual is `pyGOMAS Manual v2025.pdf`.
+2. Unzip `equipo_IDIAVAL_pyGomas.zip`. It contains `Captain.py`, the four `.asl` files, `pygomas_local.json` and the report.
+3. Run from that folder, with the XMPP server already running (the manager and service names come from `pygomas_local.json`; adjust `-jm`, `-sj` and `-m` to your setup):
+   ```bash
+   pygomas manager -jm m@localhost -m map_01 -sj s@localhost -np 20
+   pygomas run -g pygomas_local.json
+   pygomas render
+   ```
+   The Captain's rank is `Captain.CaptainBDI`, so `Captain.py` must sit next to the JSON file.
+4. The configuration includes the Axis team (8 soldiers, medic, field operator, same `.asl` files) as the opponent. The commands above are the usual pyGOMAS ones described in the guide; I did not confirm them against the PDFs line by line.
 
-*(The images are displayed in chronological order. Ensure these images are placed in a folder like `gameplay_screenshots/` in your repository. If you haven't renamed the image files to remove spaces, the links below might need URL encoding for spaces, i.e., replacing spaces with `%20`, or it's best to rename them, e.g., to `game_step_1.png`, `game_step_2.png`, etc.)*
+## Repository layout
 
-**1. Early Game Setup / Initial Deployment**
+```
+equipo_IDIAVAL_pyGomas.zip      final team: Captain.py, 4 x .asl, pygomas_local.json, memoria_AIN_IDIAVAL.pdf
+AIN_pyGomas_P1.zip              earlier snapshot of the .asl files, config and pygomas_stats.txt
+pygomas.zip                     a copy of the pygomas working directory (platform code, with its own .git and .eggs)
+AIN_iniciar_pygomas_guia.pdf    setup guide
+AIN_2025_pyGOMAS_P1_sesion_{2,3,4}.pdf   course session slides
+pyGOMAS Manual v2025.pdf        platform manual
+Jason_cheatsheet.pdf            AgentSpeak / Jason reference
+imagenes/                       match screenshots (1 May 2025)
+```
 
-![Game Screenshot 1: Early Game](./imagenes/Captura%20de%20pantalla%202025-05-01%20221343.png)
+## Stack
 
+pyGOMAS, SPADE and XMPP (PyJabber), AgentSpeak (BDI agents), Python 3.7, Pygame renderer.
 
-**2. Mid-Game Progression**
+## Gameplay screenshots
 
-![Game Screenshot 2: Mid-Game](./imagenes/Captura%20de%20pantalla%202025-05-01%20221416.png)
+Chronological, from the repo's `imagenes/` folder.
 
-
-**3. Tactical Engagement**
-
-![Game Screenshot 3: Engagement](./imagenes/Captura%20de%20pantalla%202025-05-01%20221441.png)
-
-
-**4. Advancing / Objective Focus**
-
-![Game Screenshot 4: Advancing](./imagenes/Captura%20de%20pantalla%202025-05-01%20221457.png)
-
-
-**5. Later Stages of the Match**
-
-![Game Screenshot 5: Later Stages](./imagenes/Captura%20de%20pantalla%202025-05-01%20221527.png)
-
-
-**6. Final Moments / Outcome**
-
-![Game Screenshot 6: Final Moments](./imagenes/Captura%20de%20pantalla%202025-05-01%20221629.png)
+![Mid-game progression](./imagenes/Captura%20de%20pantalla%202025-05-01%20221416.png)
+![Tactical engagement](./imagenes/Captura%20de%20pantalla%202025-05-01%20221441.png)
+![Advancing toward the objective](./imagenes/Captura%20de%20pantalla%202025-05-01%20221457.png)
+![Later stages of the match](./imagenes/Captura%20de%20pantalla%202025-05-01%20221527.png)
+![Final moments](./imagenes/Captura%20de%20pantalla%202025-05-01%20221629.png)
